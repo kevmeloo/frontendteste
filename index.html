@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product CRUD</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Product CRUD</h1>
+
+  <h2>Products</h2>
+  <ul id="product-list"></ul>
+
+  <h2>Add Product</h2>
+  <form id="add-product-form">
+    <input type="text" id="product-name" placeholder="Product Name" required>
+    <input type="number" id="product-price" placeholder="Product Price" required>
+    <button type="submit">Add Product</button>
+  </form>
+
+  <script>
+    const productList = document.getElementById('product-list');
+    const addProductForm = document.getElementById('add-product-form');
+
+    // Função para obter todos os produtos
+    function getProducts() {
+      fetch('http://localhost:3000/products')
+        .then(response => response.json())
+        .then(data => {
+          productList.innerHTML = '';
+
+          data.forEach(product => {
+            const item = document.createElement('li');
+            item.textContent = `ID: ${product.id}, Name: ${product.name}, Price: ${product.price}`;
+
+            // Botão View (Consultar produto individualmente)
+            const viewButton = document.createElement('button');
+            viewButton.textContent = 'View';
+            viewButton.addEventListener('click', () => viewProduct(product.id));
+            item.appendChild(viewButton);
+
+            // Botão Edit (Alterar produto)
+            const editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.addEventListener('click', () => editProduct(product.id));
+            item.appendChild(editButton);
+
+            // Botão Delete (Deletar produto)
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => deleteProduct(product.id));
+            item.appendChild(deleteButton);
+
+            productList.appendChild(item);
+          });
+        })
+        .catch(error => console.error(error));
+    }
+
+    // Função para obter um produto individualmente pelo ID
+    function viewProduct(id) {
+      fetch(`http://localhost:3000/products/${id}`)
+        .then(response => response.json())
+        .then(data => {
+          alert(`ID: ${data.id}\nName: ${data.name}\nPrice: ${data.price}`);
+        })
+        .catch(error => console.error(error));
+    }
+
+    // Função para adicionar um produto
+    function addProduct(name, price) {
+      fetch('http://localhost:3000/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, price })
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Product added:', data);
+          getProducts();
+        })
+        .catch(error => console.error(error));
+    }
+
+    // Função para editar um produto
+    function editProduct(id) {
+      const newPrice = prompt('Enter the new price:');
+
+      if (newPrice) {
+        fetch(`http://localhost:3000/products/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ price: newPrice })
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Product updated:', data);
+            getProducts();
+          })
+          .catch(error => console.error(error));
+      }
+    }
+
+    // Função para deletar um produto
+    function deleteProduct(id) {
+      if (confirm('Are you sure you want to delete this product?')) {
+        fetch(`http://localhost:3000/products/${id}`, {
+          method: 'DELETE'
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Product deleted:', data);
+            getProducts();
+          })
+          .catch(error => console.error(error));
+      }
+    }
+
+    // Evento de envio do formulário de adição de produto
+    addProductForm.addEventListener('submit', event => {
+      event.preventDefault();
+
+      const name = document.getElementById('product-name').value;
+      const price = document.getElementById('product-price').value;
+
+      addProduct(name, price);
+
+      // Limpar os campos do formulário
+      addProductForm.reset();
+    });
+
+    // Obter a lista de produtos ao carregar a página
+    getProducts();
+  </script>
+</body>
+</html>
